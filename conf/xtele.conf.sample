@@ -1,0 +1,16 @@
+<xtele>
+<module name="test_ext.so">
+</module>
+<module name="x11.so">
+	<prop name="title">Xtele</prop>
+</module>
+<module name="channels.so">
+	<prop name="channels">
+		<list>
+			<el>
+				<prop name="France 2">479250000</prop>
+			</el>
+		</list>
+	</prop>
+</module>
+</xtele>
