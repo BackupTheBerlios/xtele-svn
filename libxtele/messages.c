@@ -1,3 +1,15 @@
+/** @file
+ * Functions to convey messages inside xtele and its modules.
+ * @see xtele message
+ * @ingroup libxtele xtele_message
+ */
+/** @defgroup xtele_message xtele message
+ * Message conveying inside xtele and its modules.
+ * @see xtele_objects xtele_xml
+ * @ingroup libxtele
+ * @{
+ */
+ 
 #include <unistd.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -5,8 +17,8 @@
 #include <sys/select.h>
 #include "xtelelib.h"
 
-xtele_list* listen_list = NULL;
-int running;
+static xtele_list* listen_list = NULL;
+static int running;
 
 static void xtele_xml_send(char* s, void* file) {
 	write(*((int*) file), s, strlen(s));
@@ -52,10 +64,33 @@ static void xtele_message_data_send(xtele_object* writer, xtele_type type, void*
 	}
 }	
 
+#if 0
 void xtele_message_close(xtele_object* dest) {
 
-}	
+}
+#endif
 
+static xtele_object* xtele_message_new(char* message_name, char* sender_name, xtele_type type, void* data) {
+	xtele_object* message = NULL;
+
+	if(message_name && sender_name) {
+		message = xtele_object_new(message_name);
+		xtele_object_prop_add(message, "sender/name", XTELE_TYPE_STRING, strdup(sender_name));
+		xtele_object_prop_add(message, "data", type, data);
+	}
+	return message;
+}
+
+static void xtele_message_destroy(xtele_object* message) {
+	xtele_object_prop_remove(message, "data");
+	xtele_object_destroy(message);
+}
+
+/** Sends a message.
+ * @see  xtele_message_send_long xtele_message_send_void xtele_message_send_string xtele_message_send_int xtele_message_send_prop
+ * @param dest Recipient of the message.
+ * @param message Message to be sent.
+ */
 void xtele_message_send(xtele_object* dest, xtele_object* message) {
 	xtele_object* writer;
 	char type_buffer[XTELE_INT_MAX_LEN], *sender_name;
@@ -77,6 +112,14 @@ void xtele_message_send(xtele_object* dest, xtele_object* message) {
 	xtele_xml_writer_end_element(writer);
 }
 
+/** Sends a message.
+ * @see  xtele_message_send xtele_message_send_void xtele_message_send_string xtele_message_send_int xtele_message_send_prop
+ * @param dest Recipient of the message.
+ * @param sender_name Name of the sender.
+ * @param message_name Name (or title) of the message.
+ * @param type ::xtele_type of the message.
+ * @param data Data to be sent.
+ */
 void xtele_message_send_long(xtele_object* dest, char* sender_name, char* message_name, xtele_type type, void* data) {
 	xtele_object* message;
 
@@ -86,18 +129,35 @@ void xtele_message_send_long(xtele_object* dest, char* sender_name, char* messag
 
 		message = xtele_message_new(message_name, sender_name, type, data);
 		xtele_message_send(dest, message);
-		xtele_object_destroy(message);
+		xtele_message_destroy(message);
 	}
 }	
 
+/** Sends a void message.
+ * @see xtele_message_send xtele_message_send_long xtele_message_send_string xtele_message_send_int xtele_message_send_prop
+ * @param dest Recipient of the message.
+ * @param message Name (or title) of the message.
+ */
 void xtele_message_send_void(xtele_object* dest, char* message) {
 	xtele_message_send_long(dest, NULL, message, XTELE_TYPE_NULL, NULL);
 }
 
+/** Sends a message of type xtele_type::XTELE_TYPE_STRING.
+ * @see xtele_message_send xtele_message_send_long xtele_message_send_void xtele_message_send_int xtele_message_send_prop
+ * @param dest Recipient of the message.
+ * @param message Name (or title) of the message.
+ * @param string String to be sent.
+ */
 void xtele_message_send_string(xtele_object* dest, char* message, char* string) {
-	xtele_message_send_long(dest, NULL, message, XTELE_TYPE_STRING, strdup(string));
+	xtele_message_send_long(dest, NULL, message, XTELE_TYPE_STRING, string);
 }
 
+/** Sends a message of type xtele_type::XTELE_TYPE_INT.
+ * @see xtele_message_send xtele_message_send_long xtele_message_send_void xtele_message_send_string  xtele_message_send_prop
+ * @param dest Recipient of the message.
+ * @param message Name (or title) of the message.
+ * @param data Integer to be sent.
+ */
 void xtele_message_send_int(xtele_object* dest, char* message, int data) {
 	int* pint;
 
@@ -106,6 +166,12 @@ void xtele_message_send_int(xtele_object* dest, char* message, int data) {
 	xtele_message_send_long(dest, NULL, message, XTELE_TYPE_INT, pint);
 }
 
+/** Sends a message of type xtele_type::XTELE_TYPE_PROP.
+ * @see xtele_message_send xtele_message_send_long xtele_message_send_void xtele_message_send_string xtele_message_send_int
+ * @param dest Recipient of the message.
+ * @param message Name (or title) of the message.
+ * @param prop ::xtele_prop to be sent.
+ */
 void xtele_message_send_prop(xtele_object* dest, char* message, xtele_prop* prop) {
 	xtele_message_send_long(dest, NULL, message, XTELE_TYPE_PROP, prop);
 }
@@ -194,7 +260,6 @@ static void xtele_xml_element_end(char* qName, void *sender) {
 	
 	message_stack = xtele_object_prop_get(sender, "message");
 	if(streq( qName, "xtele")) {
-		xtele_message_close(sender);
 		xtele_message_listen_unregister(sender);
 	} else if(streq( qName, "el")) {
 		void* data;
@@ -260,6 +325,7 @@ static void xtele_message_check_modules(fd_set* set) {
 	}
 }
 
+/** Enter the main 'listening loop' */
 void xtele_message_listen(void) {
 	fd_set set;
 
@@ -272,6 +338,11 @@ void xtele_message_listen(void) {
 	}
 }
 
+/** Register a new module which will be able to send and receive messages 
+ * @param module The new module to register.
+ * @param message_handler The function which will be called when a message is received.
+ * @param data This will be passed to @p message_handler each time it is called.
+ */
 void xtele_message_listen_register(xtele_object* module, void (*message_handler) (xtele_object*, void*), void* data) {
 	xtele_object_prop_change_data(module, "message_handler", message_handler);
 	xtele_object_prop_change_data(module, "message_handler_data", data);
@@ -279,15 +350,22 @@ void xtele_message_listen_register(xtele_object* module, void (*message_handler)
 	listen_list = xtele_list_append(listen_list, module);
 }
 
+/** Removes a module from the listening main loop.
+ * It won't be able to receive or send messages anymore.
+ * @param module The module to unregister.
+ */
 void xtele_message_listen_unregister(xtele_object* module) {
 	printf("%s\n", module->name);
 	listen_list = xtele_list_remove(listen_list, memeq, module, NULL);
 }	
 
+/** Stop the main loop initiated by ::xtele_message_listen */
 void xtele_message_listen_stop(void) {
 	running = 0;
 }
 
+/** Cleaning function */
 void xtele_message_uninit(void) {
 	xtele_list_destroy(listen_list, NULL);
 }
+/** @} */

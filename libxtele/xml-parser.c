@@ -1,6 +1,11 @@
 #include <stdlib.h>
 #include <string.h>
 
+/** @defgroup xtele_xml xtele xml
+ * general xml functions for parsing and outputting xml files in xtele. 
+ * @ingroup libxtele
+ */
+
 static int xml_find_char(char* buf, char find, int start, int end) {
 	int i;
 	
@@ -90,6 +95,20 @@ static void xml_parse_end_element(char* buf, int start, int end,
 	free(name);
 }
 
+/** @defgroup xtele_xml_parsing xml parsing
+ * xml functions for parsing xml files.
+ * @ingroup xtele_xml
+ * @see xtele_xml_write 
+ * @{
+ */
+
+/** Retrieves the content of an attribute given its name.
+ * It is designed to be used inside of the 'user_start_element' given to ::xtele_xml_parse. By passing the 2nd argument as the 'atts' argument.
+ * @warning The returned string must not be freed !
+ * @param atts 2nd argument of 'user_start_element'.
+ * @param name The xml attribute we want to retrieve.
+ * @return The xml attribute.
+ */
 char* xtele_xml_att_get(char** atts, char* name) {
 	if(atts)
 		while(*atts) {
@@ -101,6 +120,16 @@ char* xtele_xml_att_get(char** atts, char* name) {
 	return NULL;
 }
 
+/** xml parsing.
+ * Parses an xml stream. It is 'event oriented'.
+ * It gets input by a user function and call a handler each time an xml node is opened, closed or content is encountered.
+ * @param user_input function by which it gets xml data.
+ * @param user_start_element function called at the beginning of a node.
+ * @param user_content function called when content is encountered
+ * @param user_end_element function called at the end of a node.
+ * @param user_input_data data passed as the last argument of user_input.
+ * @param user_data data passed as the last argument of each parsing function (user_start_element, user_content and user_end_element.
+ */
 void xtele_xml_parse(
 		void (*user_input) (char*, int, int*, void*),
 		void (*user_start_element) (char*, char**, void*),
@@ -165,3 +194,4 @@ void xtele_xml_parse(
 	}
 	free(buf);
 }
+/* @} */

@@ -1,4 +1,3 @@
-//#include "utils.h"
 #include "xtelelib.h"
 
 typedef xtele_listb channel_list;

@@ -2,6 +2,19 @@
 #include <string.h>
 #include "xtelelib.h"
 
+/** @defgroup xtele_xml_write xml writing
+ * xml functions for writing xml files.
+ * @see xtele_xml_parsing xtele_object
+ * @ingroup xtele_xml
+ * @{
+ */
+
+/** Creates a new xml_writer object.
+ * The xml_writer object created can then be used by all the xml_writer_* functions. A unique xml_writer object may be used by several functions. It must be destroyed by ::xtele_object_destroy after use.
+ * @param xml_writer The function used to output xml data.
+ * @param user_data Data passed to xml_writer each time it is called.
+ * @return a xml_writer object used by xtele_xml_* functions.
+ */
 xtele_object* xtele_xml_writer_new(void (*xml_writer) (char* , void* ), void* user_data) {
 	xtele_object* writer = NULL;
 
@@ -15,6 +28,10 @@ xtele_object* xtele_xml_writer_new(void (*xml_writer) (char* , void* ), void* us
 	return writer;
 }
 
+/** Begins an element in the xml stream.
+ * @param writer an xml_writer object given by ::xtele_xml_writer_new.
+ * @param element_name name of the element to begin.
+ */
 void xtele_xml_writer_add_element(xtele_object* writer, char* element_name) {
 	xtele_object* element;
 	xtele_stack* doc;
@@ -77,6 +94,11 @@ static void xtele_xml_writer_output_element(xtele_object* writer) {
 	}
 }
 
+/** Adds an attribute to an element.
+ * @param writer an xml_writer object given by ::xtele_xml_writer_new.
+ * @param att_name name of the attribute to add.
+ * @param att_value value of the attribute.
+ */
 void xtele_xml_writer_add_attribute(xtele_object* writer, char* att_name, char* att_value) {
 	xtele_stack* doc;
 	xtele_object* element;
@@ -94,6 +116,10 @@ void xtele_xml_writer_add_attribute(xtele_object* writer, char* att_name, char* 
 	}
 }
 
+/** Adds content to an element. 
+ * @param writer an xml_writer object given by ::xtele_xml_writer_new.
+ * @param text The content to add.
+ */
 void xtele_xml_writer_add_text(xtele_object* writer, char* text) {
 	void (*xml_writer) (char* , void* );
 	void* data;
@@ -107,6 +133,11 @@ void xtele_xml_writer_add_text(xtele_object* writer, char* text) {
 	}
 }
 
+/** Ends an element in the xml stream.
+ * The data are actually written.
+ * It must follow an ::xtele_xml_writer_add_element.
+ * @param writer an xml_writer object given by ::xtele_xml_writer_new.
+ */
 void xtele_xml_writer_end_element(xtele_object* writer) {
 	void (*xml_writer) (char* , void* );
 	void* data;
@@ -133,3 +164,4 @@ void xtele_xml_writer_end_element(xtele_object* writer) {
 		}
 	}
 }
+/* @} */

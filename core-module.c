@@ -38,8 +38,9 @@ static void xtele_core_manage_message(xtele_object* message, void* user_data) {
 
 		xtele_print(DEBUG, "xtele", "Module '%s' wants his configuration parameter '%s'.\n", sender->name, data);
 		conf = xtele_core_conf_get(sender->name, data);
-		if(conf)
+		if(conf) {
 			xtele_message_send_prop(sender, "xtele/conf/module", conf);
+		}
 	}
 }
 

@@ -5,6 +5,23 @@
 #include "core-module.h"
 #include "core.h"
 
+xtele_object* xtele_module_new(char* name, char* sender_name, int file) {
+	xtele_object* object;
+	int *pfile;
+
+	pfile = calloc(1, sizeof(int));
+	*pfile = file;
+
+	object = xtele_object_new(name);
+	xtele_object_prop_add(object, "file", XTELE_TYPE_INT, pfile);
+	xtele_object_prop_add(object, "sender/name", XTELE_TYPE_STRING, strdup(sender_name));
+	xtele_object_prop_add(object, "message", XTELE_TYPE_LIST_UNKNOWN, xtele_stack_new());
+	xtele_object_prop_add(object, "message_handler", XTELE_TYPE_UNKNOWN, NULL);
+	xtele_object_prop_add(object, "message_handler_data", XTELE_TYPE_UNKNOWN, NULL);
+
+	return object;
+}
+ 
 void xtele_core_broadcast(xtele_object* message, void* data) {
 	xtele_list *module_list;
 
@@ -79,6 +96,10 @@ void xtele_core_uninit(void) {
 	xtele_object_destroy(core_app);
 }
 
+
+/** Initialisation.
+ * Initialise the core
+ */
 void xtele_core_init(void) {
 	core_app = xtele_object_new("xtele");
 
