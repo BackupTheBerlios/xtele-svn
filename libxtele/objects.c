@@ -87,7 +87,7 @@ void xtele_object_prop_change_data(xtele_object* object, char* name, void* data)
 
 void xtele_object_prop_delete(xtele_object* object, char* name) {
 	if(object) {
-		object->data = xtele_list_remove(object->data, FOREACH_FUNC(xtele_prop_is), name, xtele_prop_destroy);
+		object->data = xtele_list_remove(object->data, FOREACH_FUNC(xtele_prop_is), name, FREE_FUNC(xtele_prop_destroy));
 	}
 }
 
