@@ -80,8 +80,11 @@ xtele_object* xtele_object_new(char* name);
 #define xtele_object_destroy(object) xtele_prop_destroy(object)
 void xtele_object_prop_add(xtele_object* object, char* name, xtele_type type, void* data);
 void xtele_object_prop_add_int(xtele_object* object, char* name, int integer);
+#define xtele_object_prop_add_string(object, name, string) xtele_object_prop_add(object, name, XTELE_TYPE_STRING, string)
+#define xtele_object_prop_add_prop(object, name, prop) xtele_object_prop_add(object, name, XTELE_TYPE_PROP, prop)
 void xtele_object_prop_change_data(xtele_object* object, char* name, void* data);
 void xtele_object_prop_delete(xtele_object* object, char* name);
+void* xtele_object_prop_remove(xtele_object* object, char* name);
 void* xtele_object_prop_get(xtele_object* object, char* name);
 xtele_prop* xtele_object_prop_get_prop(xtele_object* object, char* name);
 xtele_type xtele_object_prop_get_type(xtele_object* object, char* name);

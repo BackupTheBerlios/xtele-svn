@@ -285,7 +285,6 @@ void xtele_message_listen_unregister(xtele_object* module) {
 }	
 
 void xtele_message_listen_stop(void) {
-	puts("STOP");
 	running = 0;
 }
 

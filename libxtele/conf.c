@@ -7,80 +7,82 @@ static void xtele_conf_get_data(char* buf, int cBytes, int *cBytesActual, void* 
 	*cBytesActual = fread(buf, 1, cBytes, file);
 }
 
-static void xtele_conf_element_start(char* qName, char** atts, void* stack) {
+static void xtele_conf_element_start(char* qName, char** atts, void* state) {
+	int *level = xtele_object_prop_get(state, "level");
+	if(level) {
+		(*level)++;
+	}
+	
 	if(streq(qName, "xtele")) {
-		xtele_stack_push(stack, NULL);
-	} else if(streq(qName, "list")) {
-		xtele_stack_push(stack, NULL);
-	} else if(streq(qName, "module") || streq(qName, "prop")) {
+		if(*level > 1)
+			xtele_print(ALERT, "xtele/conf", "Configuration file syntax incorrect\n");
+		
+		xtele_object_prop_add(state, "conf", XTELE_TYPE_LIST_PROP, xtele_list_new());
+	} else if(streq(qName, "module")) {
 		char* name;
+		xtele_object* module;
 
+		if(*level > 2 || *level < 1)
+			xtele_print(ALERT, "xtele/conf", "Configuration file syntax incorrect\n");
+		
 		name = xtele_xml_att_get(atts, "name");
-		xtele_stack_push(stack, strdup(name));
-		xtele_stack_push(stack, NULL);
+		module = xtele_object_new(name);
+		xtele_object_prop_add_prop(state, "module", module);
+	} else if(streq(qName, "prop")) {
+		char* name;
+		xtele_object* prop;
+		
+		name = xtele_xml_att_get(atts, "name");
+	//	prop = xtele_object_new(name);
 	}
 }
 
-static void xtele_conf_element_content(char* chars, int cbSize, void* stack) {
+static void xtele_conf_element_content(char* chars, int cbSize, void* state) {
 	char *nchars;
 	
 	nchars = calloc(cbSize + 1, sizeof(char));
 	memcpy(nchars, chars, cbSize);
 
-	xtele_stack_push(stack, nchars);
+	xtele_object_prop_add(state, "content", XTELE_TYPE_STRING, nchars);
 }
 
-static void xtele_conf_element_end(char* qName, void* stack) {
-	void *prop_data;
+static void xtele_conf_element_end(char* qName, void* state) {
+	int *level = xtele_object_prop_get(state, "level");
+	if(level) {
+		(*level)--;
+	}
+	
 	if(streq(qName, "xtele") ) {
-		xtele_list* conf;
-		void* data;
 		
-		conf = xtele_list_new();
-		while((data = xtele_stack_pop(stack)))
-			conf = xtele_list_insert(conf, data);
-		xtele_stack_push(stack, conf);	
-	} else {
-		char *name;
-		xtele_object *prop;
-		xtele_type type = XTELE_TYPE_STRING; 
-
-		prop_data = xtele_stack_pop(stack);
-		if(prop_data) {
-			if(xtele_stack_get_data(stack) || streq(qName, "module")) {
-				xtele_list* prop_list;
-				void* data;
-
-				type = XTELE_TYPE_LIST_PROP;
-				prop_list = xtele_list_new();
-				prop_list = xtele_list_insert(prop_list, prop_data);
-				while((data = xtele_stack_pop(stack))) 
-					prop_list = xtele_list_insert(prop_list, data);
-				prop_data = prop_list;
-			} else 
-				xtele_stack_pop(stack);
-		}
-		name = xtele_stack_pop(stack);
-		prop = xtele_prop_new(name, type, prop_data);
-		xtele_stack_push(stack, prop);
-		free(name);
+	} else if(streq(qName, "prop")) {
+		xtele_object_prop_delete(state, "content");
+	} else if(streq(qName, "module")) {
+		xtele_object* module = xtele_object_prop_remove(state, "module");
+		xtele_list* conf = xtele_object_prop_get(state, "conf");
+		conf = xtele_list_insert(conf, module);
+		xtele_object_prop_change_data(state, "conf", conf);
 	}
 }
 
 xtele_list* xtele_conf_parse(void) {
 	xtele_list* conf;
-	xtele_stack* stack;
+	xtele_object* state;
 	char* conffile = xtele_userconffile();
-	FILE* file;
-
-	stack = xtele_stack_new();
-	file = fopen(conffile, "r");
+	FILE* file = fopen(conffile, "r");
 	
-	xtele_xml_parse(xtele_conf_get_data, xtele_conf_element_start, xtele_conf_element_content, xtele_conf_element_end, file, stack);
-	conf = xtele_stack_pop(stack);
-	xtele_stack_destroy(stack);
+	if(!file) {
+		xtele_print(ALERT, "xtele conf", "Cannot open the configuration file.\n");
+		free(conffile);
+		return NULL;
+	}
+	state = xtele_object_new("state");
+	xtele_object_prop_add_int(state, "level", 0);
+	
+	xtele_xml_parse(xtele_conf_get_data, xtele_conf_element_start, xtele_conf_element_content, xtele_conf_element_end, file, state);
+	
+	conf = xtele_object_prop_remove(state, "conf");
+	xtele_object_destroy(state);
 	fclose(file);
 	free(conffile);
-
 	return conf;
 }

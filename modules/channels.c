@@ -51,15 +51,16 @@ void channels_manage_events(xtele_object* message, void* xtele) {
 		channels_previous(xtele);
 	} else if(xtele_message_is(message, "xtele/conf/module")) {
 		xtele_list* clist;
-
+		
 		clist = XTELE_PROP(xtele_message_data(message))->data;
 		while(clist) {
+			xtele_print(DEBUG, "channels", "Channel : %s, freq : %s\n");
 			channels_append(XTELE_PROP(clist->data)->name, atoi(XTELE_PROP(clist->data)->data));
 			xtele_list_next(clist);
 		}
 		channels_set_current(xtele);
 	}
-}	
+}
 
 void xtele_ext_init(xtele_object* xtele) {
 	xtele_message_send_string(xtele, "xtele/message/receive", "channels/next");

@@ -24,9 +24,10 @@ static void xtele_prop_destroy_data(xtele_type type, void* data) {
 			xtele_list_destroy(data, NULL);
 		else if(type == XTELE_TYPE_LIST_STRING || type == XTELE_TYPE_LIST_INT)
 			xtele_list_destroy(data, free);
-		else if(type == XTELE_TYPE_OBJECT) {
+		else if(type == XTELE_TYPE_OBJECT) 
 			xtele_list_destroy(data, FREE_FUNC(xtele_prop_destroy));
-		}
+		else if(type == XTELE_TYPE_PROP)
+			xtele_prop_destroy(data);
 	}
 }
 
@@ -38,7 +39,7 @@ void xtele_prop_destroy(xtele_prop* prop) {
 	}
 }
 
-	int xtele_prop_is(xtele_prop* prop, char* name) {
+int xtele_prop_is(xtele_prop* prop, char* name) {
 	if(prop)
 		return streq(prop->name, name);
 	return 0;
@@ -47,6 +48,12 @@ void xtele_prop_destroy(xtele_prop* prop) {
 int xtele_prop_is_type(xtele_prop* prop, int type) {
 	if(prop)
 		return prop->type == type;
+	return 0;
+}
+
+int xtele_prop_print(xtele_prop* prop) {
+	if(prop)
+		printf("Property : '%s'\n", prop->name);
 	return 0;
 }
 /* Fin xtele_prop */
@@ -91,6 +98,19 @@ void xtele_object_prop_delete(xtele_object* object, char* name) {
 	}
 }
 
+void* xtele_object_prop_remove(xtele_object* object, char* name) {
+	if(object) {
+		xtele_prop* prop = xtele_object_prop_get_prop(object, name);
+		if(prop) {
+			void* data = prop->data;
+			prop->data = NULL;
+			xtele_object_prop_delete(object, name);
+			return data;
+		}
+	}
+	return NULL;
+}
+
 xtele_prop* xtele_object_prop_get_prop(xtele_object* object, char* name) {
 	xtele_prop* prop = NULL;
 
@@ -111,6 +131,7 @@ void* xtele_object_prop_get(xtele_object* object, char* name) {
 	return data;
 }
 
+
 xtele_type xtele_object_prop_get_type(xtele_object* object, char* name) {
 	xtele_prop* prop;
 	xtele_type type = XTELE_TYPE_UNKNOWN;
@@ -120,6 +141,14 @@ xtele_type xtele_object_prop_get_type(xtele_object* object, char* name) {
 		type = prop->type;
 	}
 	return type;
+}
+
+int xtele_object_print(xtele_object* object) {
+	if(object) {
+		printf("Object : '%s'\n", object->name);
+		xtele_list_foreach(object->data, FOREACH_FUNC(xtele_prop_print), NULL);
+	}
+	return 0;
 }
 
 xtele_object* xtele_module_new(char* name, char* sender_name, int file) {

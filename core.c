@@ -1,7 +1,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <dlfcn.h>
 #include <sys/socket.h>
 #include "core-module.h"
 #include "core.h"
@@ -86,6 +85,7 @@ void xtele_core_init(void) {
 	xtele_object_prop_add(core_app, "module list", XTELE_TYPE_LIST_PROP, xtele_list_new());
 	xtele_object_prop_add(core_app, "module list local", XTELE_TYPE_LIST_PROP, xtele_list_new());
 	xtele_object_prop_add(core_app, "configuration", XTELE_TYPE_LIST_PROP, xtele_conf_parse());
+	
 	xtele_core_module_start("core", xtele_core_run);
 	xtele_message_listen();
 
@@ -108,19 +108,9 @@ xtele_object* xtele_core_module_start(char* name, void (*ext_init) (xtele_object
 	module_list_local = xtele_object_prop_get(core_app, "module list local");
 	module_list_local = xtele_list_add(module_list_local, xtele);
 	xtele_object_prop_change_data(core_app, "module list local", module_list_local);
-
+	
 	ext_init(xtele);
 	xtele_print(DEBUG, "xtele", "Module '%s' loaded.\n", name);
 	return module;
 }
 
-void xtele_core_module_load(char* name, char* filename) {
-	void (*ext_init) ( xtele_object*);
-	void* handle;
-	xtele_object* module;
-
-	handle = dlopen(filename, RTLD_NOW);
-	ext_init = dlsym(handle, "xtele_ext_init");
-	module = xtele_core_module_start(name, ext_init);
-	xtele_object_prop_add(module, "dl handle", XTELE_TYPE_UNKNOWN, handle);
-}

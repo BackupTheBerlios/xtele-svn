@@ -27,8 +27,8 @@ void xtele_list_destroy_one(xtele_list* list, void (*free_func) (void*) ) {
 void xtele_list_destroy(xtele_list* list, void (*free_func) (void*) ) {
 	if(list) {
 		xtele_list_destroy(list->next, free_func);
+		xtele_list_destroy_one(list, free_func);
 	}
-	xtele_list_destroy_one(list, free_func);
 }
 
 xtele_list* xtele_list_last(xtele_list* list) {
@@ -93,7 +93,7 @@ xtele_list* xtele_list_remove_element(xtele_list* list,  void (*free_func) (void
 			list->prev->next = list->next;
 			ret = list->prev;
 		} else 
-			ret = list->next;			
+			ret = list->next;
 
 		if(free_func)
 			free_func(list->data);
@@ -102,8 +102,12 @@ xtele_list* xtele_list_remove_element(xtele_list* list,  void (*free_func) (void
 	return ret;
 }
 
-xtele_list* xtele_list_remove(xtele_list* list, int (*del_func) (void*, void*), void* data, void (*free_func) (void*)) {
-		return xtele_list_remove_element(xtele_list_foreach(list, del_func, data), free_func);
+xtele_list* xtele_list_remove(xtele_list* list, int (*del_func) (void*, void*), void* data, void (*free_func)  (void*)) {
+	xtele_list* del_element = xtele_list_foreach(list, del_func, data);
+	if(del_element)
+		return xtele_list_remove_element(del_element, free_func);
+	else
+		return list;
 }
 
 xtele_list* xtele_list_foreach(xtele_list* debut, int (*foreach_func) (void*, void*), void* data) {

@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <dirent.h>
+#include <dlfcn.h>
 #include "core.h"
 
 static void xtele_core_manage_message(xtele_object* message, void* user_data) {
@@ -42,6 +43,17 @@ static void xtele_core_manage_message(xtele_object* message, void* user_data) {
 	}
 }
 
+void xtele_core_module_load(char* name, char* filename) {
+	void (*ext_init) ( xtele_object*);
+	void* handle;
+	xtele_object* module;
+
+	handle = dlopen(filename, RTLD_NOW);
+	ext_init = dlsym(handle, "xtele_ext_init");
+	module = xtele_core_module_start(name, ext_init);
+	xtele_object_prop_add(module, "dl handle", XTELE_TYPE_UNKNOWN, handle);
+}
+
 void xtele_core_module_find(void) {
 	DIR* moduledir;
 	struct dirent *file;
@@ -49,6 +61,12 @@ void xtele_core_module_find(void) {
 
 	moduledir_char = xtele_usermoduledir();
 	moduledir = opendir(moduledir_char);
+	
+	if(!moduledir) {
+		xtele_print(ALERT, "xtele", "Module directory inexistant.\nNo module were loaded.\n");
+		return;
+	}
+		
 	while((file = readdir(moduledir))) {
 		if(file->d_name[0] != '.') {
 			char* file_name;

@@ -11,7 +11,6 @@ void xtele_core_module_message_add(xtele_object* module, char* event_type);
 int xtele_core_module_message_match(xtele_object* module, char* event_type);
 xtele_prop* xtele_core_conf_get(char* module, char* prop_name);
 void xtele_core_quit(void);
-void xtele_core_module_load( char* name, char* filename);
 xtele_object* xtele_core_module_start(char* name, void (*ext_init) (xtele_object* ));
 void xtele_core_init(void);
 
