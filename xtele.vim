@@ -1,1 +1,0 @@
-syntax keyword Type xtele_object xtele_prop xtele_event xtele_list xtele_listb
